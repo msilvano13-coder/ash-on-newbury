@@ -1682,7 +1682,7 @@
     } catch(e){}
   }
   function applyData(el, d){
-    if(d.html !== undefined) el.innerHTML = d.html;
+    if(d.html !== undefined){ el.innerHTML = d.html; el.style.whiteSpace = 'pre-wrap'; }
     if(d.color)      el.style.color = d.color;
     if(d.fontSize)   el.style.fontSize = d.fontSize;
     if(d.fontFamily) el.style.fontFamily = d.fontFamily;
@@ -1849,24 +1849,41 @@
     if(textArea){
       // Also make element directly editable on page
       el.contentEditable = 'true';
+      el.style.whiteSpace = 'pre-wrap'; // preserve spaces on the page too
+
+      // Convert plain text spaces → HTML that preserves them exactly
+      function toHtml(txt){
+        return txt
+          .replace(/&lt;/g,'<').replace(/&gt;','>')
+          .replace(/ {2,}/g, s => s.split('').map((_, i) => i % 2 === 0 ? '&nbsp;' : ' ').join(''));
+      }
+      // Convert HTML back to plain text for textarea display
+      function fromHtml(html){
+        return html.replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+      }
+
+      // Pre-fill textarea with decoded content
+      textArea.value = fromHtml(el.innerHTML);
+
       // Sync textarea → element
       textArea.oninput = ()=>{
-        el.innerHTML = textArea.value.replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+        el.innerHTML = toHtml(textArea.value);
         saveEdit(el, {html: el.innerHTML});
       };
+
       // Mirror the element's real font into the textarea so spacing matches
-      textArea.style.fontFamily  = cs.fontFamily;
-      textArea.style.fontSize    = cs.fontSize;
+      textArea.style.fontFamily    = cs.fontFamily;
+      textArea.style.fontSize      = cs.fontSize;
       textArea.style.letterSpacing = cs.letterSpacing;
       textArea.style.textTransform = cs.textTransform;
-      textArea.style.fontWeight  = cs.fontWeight;
-      textArea.style.lineHeight  = cs.lineHeight;
-      textArea.style.color       = '#FDFBF9';
-      textArea.style.whiteSpace  = 'pre-wrap';
+      textArea.style.fontWeight    = cs.fontWeight;
+      textArea.style.lineHeight    = cs.lineHeight;
+      textArea.style.color         = '#FDFBF9';
+      textArea.style.whiteSpace    = 'pre-wrap';
 
-      // Sync element edits back to textarea
+      // Sync element direct edits back to textarea
       el.addEventListener('input', function syncBack(){
-        textArea.value = el.innerHTML.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        textArea.value = fromHtml(el.innerHTML);
         saveEdit(el, {html: el.innerHTML});
       });
     }
