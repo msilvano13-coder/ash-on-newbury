@@ -1546,7 +1546,8 @@
     background: rgba(255,255,255,.05); padding: 2px; cursor: pointer; border-radius: 2px; flex-shrink: 0;
   }
   .dev-textarea {
-    resize: vertical; min-height: 80px; line-height: 1.6; font-size: .72rem !important;
+    resize: vertical; min-height: 80px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
   }
   /* Restore text cursor when editing content on the page */
   body.dev-active [contenteditable] {
@@ -1808,6 +1809,16 @@
         el.innerHTML = textArea.value.replace(/&lt;/g,'<').replace(/&gt;/g,'>');
         saveEdit(el, {html: el.innerHTML});
       };
+      // Mirror the element's real font into the textarea so spacing matches
+      textArea.style.fontFamily  = cs.fontFamily;
+      textArea.style.fontSize    = cs.fontSize;
+      textArea.style.letterSpacing = cs.letterSpacing;
+      textArea.style.textTransform = cs.textTransform;
+      textArea.style.fontWeight  = cs.fontWeight;
+      textArea.style.lineHeight  = cs.lineHeight;
+      textArea.style.color       = '#FDFBF9';
+      textArea.style.whiteSpace  = 'pre-wrap';
+
       // Sync element edits back to textarea
       el.addEventListener('input', function syncBack(){
         textArea.value = el.innerHTML.replace(/</g,'&lt;').replace(/>/g,'&gt;');
