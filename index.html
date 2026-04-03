@@ -1934,7 +1934,7 @@
   toggleBtn.addEventListener('click', ()=> setDevMode(!devMode));
   panel.querySelector('#dev-close').addEventListener('click', ()=> setDevMode(false));
   document.addEventListener('keydown', e=>{
-    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='\\'){ e.preventDefault(); setDevMode(!devMode); }
+    if(e.ctrlKey&&!e.metaKey&&e.shiftKey&&e.key==='E'){ e.preventDefault(); setDevMode(!devMode); }
   });
 
   /* ── Init ── */
