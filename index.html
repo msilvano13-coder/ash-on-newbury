@@ -1514,6 +1514,21 @@
   }
   @keyframes devPulse { 0%,100%{opacity:.35} 50%{opacity:1} }
 
+  .dev-actions-bar {
+    display: flex; gap: .5rem; padding: .8rem 1.2rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(255,255,255,.02);
+  }
+  .dev-action-btn {
+    flex: 1; padding: .5rem .4rem; background: rgba(201,169,110,.08);
+    border: 1px solid rgba(201,169,110,.2); color: var(--gold);
+    font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+    cursor: pointer; font-family: 'Jost', sans-serif;
+    transition: background .2s;
+  }
+  .dev-action-btn:hover { background: rgba(201,169,110,.18); }
+  .dev-action-btn.success { background: rgba(80,180,80,.15); border-color: rgba(80,180,80,.3); color: #7dcc7d; }
+
   #dev-close {
     background: none; border: none; color: #5A5450;
     font-size: 1.3rem; cursor: pointer; padding: .1rem .4rem;
@@ -1707,6 +1722,11 @@
     <div class="dev-ph">
       <div class="dev-pt"><div class="dev-dot"></div>Developer Mode</div>
       <button id="dev-close">×</button>
+    </div>
+    <div class="dev-actions-bar">
+      <button class="dev-action-btn" id="dev-export" title="Export edits as JSON">⬇ Export JSON</button>
+      <button class="dev-action-btn" id="dev-import-btn" title="Import edits from JSON">⬆ Import JSON</button>
+      <input type="file" id="dev-import-file" accept=".json" style="display:none">
     </div>
     <div class="dev-pb" id="dev-pb">
       <div class="dev-hint">Click any text, section, or image on the page to select it and edit its styles.</div>
@@ -1989,6 +2009,48 @@
 
   // URL fallback: add ?edit to the URL to open dev mode directly
   if(window.location.search.includes('edit')){ setDevMode(true); }
+
+  /* ── Export JSON ── */
+  panel.querySelector('#dev-export').addEventListener('click', ()=>{
+    const edits = localStorage.getItem(EDITS_KEY) || '{}';
+    const parsed = JSON.parse(edits);
+    const count = Object.keys(parsed).length;
+    if(count === 0){ alert('No edits to export yet.'); return; }
+    const blob = new Blob([JSON.stringify(parsed, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ash-on-newbury-edits.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    const btn = panel.querySelector('#dev-export');
+    btn.textContent = '✓ Exported!';
+    btn.classList.add('success');
+    setTimeout(()=>{ btn.textContent = '⬇ Export JSON'; btn.classList.remove('success'); }, 2000);
+  });
+
+  /* ── Import JSON ── */
+  panel.querySelector('#dev-import-btn').addEventListener('click', ()=>{
+    panel.querySelector('#dev-import-file').click();
+  });
+  panel.querySelector('#dev-import-file').addEventListener('change', function(){
+    const file = this.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try {
+        const data = JSON.parse(e.target.result);
+        localStorage.setItem(EDITS_KEY, JSON.stringify(data));
+        loadEdits();
+        const btn = panel.querySelector('#dev-import-btn');
+        btn.textContent = '✓ Imported!';
+        btn.classList.add('success');
+        setTimeout(()=>{ btn.textContent = '⬆ Import JSON'; btn.classList.remove('success'); }, 2000);
+      } catch(err){ alert('Invalid JSON file.'); }
+    };
+    reader.readAsText(file);
+    this.value = '';
+  });
 
   /* ── Init ── */
   loadEdits();
