@@ -1846,8 +1846,8 @@
   }
 
   /* ── Mark editable elements ── */
-  const TEXT_SEL = 'h1,h2,h3,h4,h5,h6,p,a:not(.nav-book),li,.section-label,.section-title,.hero-eyebrow,.hero-desc,.philosophy-body,.ibe-body,.pillar-title,.pillar-text,.profile-name,.profile-bio,.contact-card-title,.contact-card-text,.footer-tagline,.stat-num,.stat-label,.book-cta-title,.book-cta-sub,.vagaro-title,.vagaro-desc,.faq-q,.faq-a-inner,.strip-item';
-  const BG_SEL   = '.hero-right,.pv-box1,.pv-box2,.pv-box3,.ibe-v1,.ibe-v2,.profile-photo-placeholder,.hero-left,.philosophy,.ibe-teaser,.book-cta,section,footer,img';
+  const TEXT_SEL = 'h1,h2,h3,h4,h5,h6,p,a:not(.nav-book),li,.section-label,.section-title,.hero-eyebrow,.hero-desc,.philosophy-body,.ibe-body,.pillar-title,.pillar-text,.profile-name,.profile-bio,.contact-card-title,.contact-card-text,.footer-tagline,.stat-num,.stat-label,.book-cta-title,.book-cta-sub,.vagaro-title,.vagaro-desc,.faq-q,.faq-a-inner,.strip-item,.book-cta-tag,.ibe-hero-eyebrow,.ibe-hero-desc,.ibe-hero-title,.stylists-hero-desc,.footer-col-title,.pv-num,.pv-label,.ibe-badge-main,.ibe-badge-sub,.ibe-badge-tag,.pillar-num,.profile-title-tag,.profile-bio,.spec-tag,.vagaro-note,.map-title,.map-addr,.footer-copy,.footer-tagline';
+  const BG_SEL   = 'nav,.signature-strip,.hero-left,.hero-right,.hero-right-bg,.pv-box1,.pv-box2,.pv-box3,.ibe-badge,.ibe-v1,.ibe-v2,.profile-photo-placeholder,.map-strip,.vagaro-box,.pillar,.contact-card,.profile-card,.stylist-join-inner,section,footer,img';
 
   function markEditables(){
     document.querySelectorAll(TEXT_SEL+','+BG_SEL).forEach(el=>{
