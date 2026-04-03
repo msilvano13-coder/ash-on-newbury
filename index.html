@@ -1933,9 +1933,13 @@
 
   toggleBtn.addEventListener('click', ()=> setDevMode(!devMode));
   panel.querySelector('#dev-close').addEventListener('click', ()=> setDevMode(false));
+  // F8 shortcut — no modifiers, nothing for Chrome to intercept
   document.addEventListener('keydown', e=>{
-    if(e.ctrlKey&&e.shiftKey&&(e.key==='E'||e.key==='e'||e.code==='KeyE')){ e.preventDefault(); setDevMode(!devMode); }
+    if(e.key==='F8'){ e.preventDefault(); setDevMode(!devMode); }
   });
+
+  // URL fallback: add ?edit to the URL to open dev mode directly
+  if(window.location.search.includes('edit')){ setDevMode(true); }
 
   /* ── Init ── */
   loadEdits();
