@@ -1604,10 +1604,10 @@
   }
   .dev-btn-gold:hover { background: rgba(201,169,110,.18); }
 
-  /* Element states in dev mode */
+  /* Element states in dev mode — no cursor override so custom JS cursor stays intact */
   body.dev-active [data-dve]:not(#dev-panel):not(#dev-toggle):hover {
     outline: 1px dashed rgba(201,169,110,.45) !important;
-    outline-offset: 2px; cursor: crosshair !important;
+    outline-offset: 2px;
   }
   body.dev-active [data-dve].dev-sel {
     outline: 2px solid var(--gold) !important; outline-offset: 2px;
@@ -1924,7 +1924,9 @@
     const pageLink = e.target.closest('[data-page]');
     const editable = e.target.closest('[data-dve]');
     if(editable && !pageLink){
-      e.preventDefault(); e.stopPropagation();
+      e.preventDefault();
+      // No stopPropagation — lets FAQ accordion, mobile nav, and other
+      // bubble-phase handlers continue to fire normally in dev mode
       selectEl(editable);
     } else if(!editable){
       deselectEl();
