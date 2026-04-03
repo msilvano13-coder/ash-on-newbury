@@ -1486,20 +1486,8 @@
      DEVELOPER MODE
 ══════════════════════════════ -->
 <style>
-  /* Toggle button */
-  #dev-toggle {
-    position: fixed; bottom: 2rem; right: 2rem;
-    width: 48px; height: 48px;
-    background: var(--charcoal); color: var(--gold);
-    border: 1px solid rgba(201,169,110,.4); border-radius: 50%;
-    font-size: 1.1rem; cursor: pointer; z-index: 9000;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .3s, color .3s, transform .2s;
-    box-shadow: 0 4px 24px rgba(0,0,0,.35);
-    font-family: 'Jost', sans-serif;
-  }
-  #dev-toggle:hover { background: var(--gold); color: var(--charcoal); transform: scale(1.06); }
-  #dev-toggle.active { background: var(--gold); color: var(--charcoal); }
+  /* Toggle button — hidden, shortcut only */
+  #dev-toggle { display: none; }
 
   /* Panel */
   #dev-panel {
@@ -1946,7 +1934,7 @@
   toggleBtn.addEventListener('click', ()=> setDevMode(!devMode));
   panel.querySelector('#dev-close').addEventListener('click', ()=> setDevMode(false));
   document.addEventListener('keydown', e=>{
-    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='D'){ e.preventDefault(); setDevMode(!devMode); }
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='\\'){ e.preventDefault(); setDevMode(!devMode); }
   });
 
   /* ── Init ── */
