@@ -1481,5 +1481,475 @@
     item.classList.toggle('open');
   });
 </script>
+
+<!-- ══════════════════════════════
+     DEVELOPER MODE
+══════════════════════════════ -->
+<style>
+  /* Toggle button */
+  #dev-toggle {
+    position: fixed; bottom: 2rem; right: 2rem;
+    width: 48px; height: 48px;
+    background: var(--charcoal); color: var(--gold);
+    border: 1px solid rgba(201,169,110,.4); border-radius: 50%;
+    font-size: 1.1rem; cursor: pointer; z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .3s, color .3s, transform .2s;
+    box-shadow: 0 4px 24px rgba(0,0,0,.35);
+    font-family: 'Jost', sans-serif;
+  }
+  #dev-toggle:hover { background: var(--gold); color: var(--charcoal); transform: scale(1.06); }
+  #dev-toggle.active { background: var(--gold); color: var(--charcoal); }
+
+  /* Panel */
+  #dev-panel {
+    position: fixed; top: 0; right: -360px; width: 340px; height: 100vh;
+    background: #1a1714; border-left: 1px solid rgba(201,169,110,.15);
+    z-index: 8999; display: flex; flex-direction: column;
+    transition: right .35s cubic-bezier(.4,0,.2,1);
+    font-family: 'Jost', sans-serif; overflow: hidden;
+  }
+  #dev-panel.open { right: 0; }
+
+  .dev-ph {
+    padding: 1.4rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dev-pt {
+    font-size: .58rem; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--gold); display: flex; align-items: center; gap: .6rem;
+  }
+  .dev-dot {
+    width: 6px; height: 6px; background: var(--gold); border-radius: 50%;
+    animation: devPulse 2s ease-in-out infinite;
+  }
+  @keyframes devPulse { 0%,100%{opacity:.35} 50%{opacity:1} }
+
+  #dev-close {
+    background: none; border: none; color: #5A5450;
+    font-size: 1.3rem; cursor: pointer; padding: .1rem .4rem;
+    transition: color .2s; line-height: 1;
+  }
+  #dev-close:hover { color: var(--white); }
+
+  .dev-pb {
+    flex: 1; overflow-y: auto; padding: 1.2rem;
+    display: flex; flex-direction: column; gap: .9rem;
+  }
+  .dev-hint {
+    font-size: .7rem; color: #5A5450; line-height: 1.7;
+    padding: 1rem; border: 1px dashed rgba(255,255,255,.07); text-align: center;
+  }
+  .dev-sel-info {
+    font-size: .65rem; color: var(--ash-dark);
+    padding: .5rem .8rem; background: rgba(255,255,255,.03);
+    border-left: 2px solid var(--gold); line-height: 1.5; word-break: break-all;
+  }
+  .dev-st {
+    font-size: .52rem; letter-spacing: .25em; text-transform: uppercase;
+    color: #5A5450; margin-bottom: .4rem; margin-top: .2rem;
+  }
+  .dev-ctrls { display: flex; flex-direction: column; gap: .75rem; }
+
+  .dev-color-row { display: flex; align-items: center; gap: .6rem; }
+  .dev-color-row input[type="color"] {
+    width: 38px; height: 34px; border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.05); padding: 2px; cursor: pointer; border-radius: 2px; flex-shrink: 0;
+  }
+  .dev-color-text, .dev-inp {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    color: var(--white); padding: .5rem .75rem; font-size: .7rem;
+    font-family: 'Jost', sans-serif; outline: none; transition: border-color .2s; width: 100%;
+  }
+  .dev-color-text { font-family: monospace; }
+  .dev-color-text:focus, .dev-inp:focus { border-color: var(--gold); }
+  select.dev-inp { cursor: pointer; }
+  select.dev-inp option { background: #1a1714; }
+
+  .dev-weight-row { display: flex; gap: .4rem; }
+  .dev-wb {
+    flex: 1; padding: .45rem; background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1); color: #6B6460;
+    font-size: .62rem; cursor: pointer; font-family: 'Jost', sans-serif;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .dev-wb:hover, .dev-wb.active {
+    background: rgba(201,169,110,.12); border-color: var(--gold); color: var(--gold);
+  }
+
+  .dev-sep { height: 1px; background: rgba(255,255,255,.06); }
+
+  .dev-drop-zone {
+    border: 1px dashed rgba(201,169,110,.25); padding: 1.4rem 1rem;
+    text-align: center; font-size: .67rem; color: #5A5450;
+    cursor: pointer; transition: background .2s, border-color .2s, color .2s; line-height: 1.7;
+  }
+  .dev-drop-zone:hover, .dev-drop-zone.drag-over {
+    background: rgba(201,169,110,.07); border-color: var(--gold); color: var(--ash);
+  }
+
+  .dev-btn {
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+    color: #6B6460; padding: .55rem 1rem; font-size: .6rem; letter-spacing: .08em;
+    cursor: pointer; font-family: 'Jost', sans-serif; width: 100%;
+    text-align: center; transition: background .2s, color .2s;
+  }
+  .dev-btn:hover { background: rgba(255,255,255,.09); color: var(--white); }
+  .dev-btn-gold {
+    background: rgba(201,169,110,.09); border: 1px solid rgba(201,169,110,.2);
+    color: var(--gold); padding: .55rem 1rem; font-size: .6rem; letter-spacing: .08em;
+    cursor: pointer; font-family: 'Jost', sans-serif; width: 100%;
+    text-align: center; transition: background .2s;
+  }
+  .dev-btn-gold:hover { background: rgba(201,169,110,.18); }
+
+  /* Element states in dev mode */
+  body.dev-active [data-dve]:not(#dev-panel):not(#dev-toggle):hover {
+    outline: 1px dashed rgba(201,169,110,.45) !important;
+    outline-offset: 2px; cursor: crosshair !important;
+  }
+  body.dev-active [data-dve].dev-sel {
+    outline: 2px solid var(--gold) !important; outline-offset: 2px;
+  }
+
+  /* Draggable cards */
+  body.dev-active [data-dvd] { position: relative; }
+  body.dev-active [data-dvd]::after {
+    content: '⠿ drag'; position: absolute; top: 6px; left: 6px;
+    background: rgba(201,169,110,.85); color: var(--charcoal);
+    font-size: .52rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: 2px 6px; cursor: grab; z-index: 50; pointer-events: none;
+    font-family: 'Jost', sans-serif;
+  }
+  body.dev-active [data-dvd].dragging { opacity: .35; }
+  body.dev-active [data-dvd].drag-over-target { outline: 2px dashed var(--gold); outline-offset: -2px; }
+</style>
+
+<script>
+(function(){
+  const EDITS_KEY = 'aon-devmode-v1';
+  let devMode = false;
+  let selectedEl = null;
+  let dragSrc = null;
+
+  /* ── Persistence ── */
+  function loadEdits(){
+    try {
+      const edits = JSON.parse(localStorage.getItem(EDITS_KEY)||'{}');
+      Object.entries(edits).forEach(([path, data])=>{
+        const el = byPath(path);
+        if(el) applyData(el, data);
+      });
+    } catch(e){}
+  }
+  function saveEdit(el, data){
+    try {
+      const edits = JSON.parse(localStorage.getItem(EDITS_KEY)||'{}');
+      const p = toPath(el);
+      edits[p] = {...(edits[p]||{}), ...data};
+      localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+    } catch(e){}
+  }
+  function clearEdit(el){
+    try {
+      const edits = JSON.parse(localStorage.getItem(EDITS_KEY)||'{}');
+      delete edits[toPath(el)];
+      localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+    } catch(e){}
+  }
+  function applyData(el, d){
+    if(d.color)      el.style.color = d.color;
+    if(d.fontSize)   el.style.fontSize = d.fontSize;
+    if(d.fontFamily) el.style.fontFamily = d.fontFamily;
+    if(d.fontWeight) el.style.fontWeight = d.fontWeight;
+    if(d.bgColor)    el.style.backgroundColor = d.bgColor;
+    if(d.bgImage){
+      el.style.backgroundImage = `url(${d.bgImage})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+    }
+    if(d.src && el.tagName === 'IMG') el.src = d.src;
+  }
+
+  /* ── Path helpers ── */
+  function toPath(el){
+    const parts = [];
+    let cur = el;
+    while(cur && cur !== document.documentElement){
+      const p = cur.parentElement;
+      if(!p) break;
+      parts.unshift(Array.from(p.children).indexOf(cur));
+      cur = p;
+    }
+    return parts.join('.');
+  }
+  function byPath(path){
+    const parts = path.split('.').map(Number);
+    let el = document.documentElement;
+    for(const i of parts){
+      if(!el || !el.children[i]) return null;
+      el = el.children[i];
+    }
+    return el;
+  }
+
+  /* ── Color helper ── */
+  function rgbToHex(rgb){
+    if(!rgb||rgb==='transparent'||rgb.includes('rgba(0, 0, 0, 0)')) return '#ffffff';
+    const m = rgb.match(/\d+/g);
+    if(!m||m.length<3) return '#2c2825';
+    return '#'+[m[0],m[1],m[2]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('');
+  }
+
+  /* ── Build panel DOM ── */
+  const panel = document.createElement('div');
+  panel.id = 'dev-panel';
+  panel.innerHTML = `
+    <div class="dev-ph">
+      <div class="dev-pt"><div class="dev-dot"></div>Developer Mode</div>
+      <button id="dev-close">×</button>
+    </div>
+    <div class="dev-pb" id="dev-pb">
+      <div class="dev-hint">Click any text, section, or image on the page to select it and edit its styles.</div>
+      <div class="dev-hint" style="border-style:solid;color:#6B6460">
+        <strong style="color:var(--gold);display:block;margin-bottom:.3rem">Drag &amp; Drop Photos</strong>
+        Drag an image file from your desktop and drop it directly onto any section of the page.
+      </div>
+    </div>`;
+  document.body.appendChild(panel);
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.id = 'dev-toggle';
+  toggleBtn.title = 'Developer Mode (⌘⇧D)';
+  toggleBtn.innerHTML = '⌘';
+  document.body.appendChild(toggleBtn);
+
+  const pb = panel.querySelector('#dev-pb');
+
+  /* ── Build controls for selected element ── */
+  function buildControls(){
+    if(!selectedEl){ pb.innerHTML = '<div class="dev-hint">Click any element to select it.</div>'; return; }
+    const cs = window.getComputedStyle(selectedEl);
+    const curColor  = rgbToHex(cs.color);
+    const curBg     = rgbToHex(cs.backgroundColor);
+    const curSize   = Math.round(parseFloat(cs.fontSize));
+    const tag = (selectedEl.className || selectedEl.tagName.toLowerCase()).toString().slice(0,60);
+
+    pb.innerHTML = `
+      <div class="dev-sel-info">${tag}</div>
+      <div class="dev-ctrls">
+
+        <p class="dev-st">Text Color</p>
+        <div class="dev-color-row">
+          <input type="color" id="dv-color" value="${curColor}">
+          <input type="text" class="dev-color-text" id="dv-ctxt" value="${curColor}" maxlength="7" placeholder="#000000">
+        </div>
+
+        <p class="dev-st">Font Size</p>
+        <input type="number" class="dev-inp" id="dv-size" min="6" max="200" value="${curSize}" placeholder="px">
+
+        <p class="dev-st">Font Family</p>
+        <select class="dev-inp" id="dv-font">
+          <option value="">— unchanged —</option>
+          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+          <option value="'Jost', sans-serif">Jost</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Playfair Display', serif">Playfair Display</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
+          <option value="'Courier New', monospace">Courier New</option>
+        </select>
+
+        <p class="dev-st">Font Weight</p>
+        <div class="dev-weight-row">
+          <button class="dev-wb" data-w="200">Thin</button>
+          <button class="dev-wb" data-w="300">Light</button>
+          <button class="dev-wb" data-w="400">Regular</button>
+          <button class="dev-wb" data-w="500">Medium</button>
+        </div>
+
+        <p class="dev-st">Background Color</p>
+        <div class="dev-color-row">
+          <input type="color" id="dv-bg" value="${curBg}">
+          <input type="text" class="dev-color-text" id="dv-bgtxt" value="${curBg}" maxlength="7" placeholder="#ffffff">
+        </div>
+
+        <div class="dev-sep"></div>
+
+        <p class="dev-st">Replace Image / Background Photo</p>
+        <div class="dev-drop-zone" id="dv-drop">
+          Drop a photo here, or click to upload
+          <input type="file" id="dv-file" accept="image/*" style="display:none">
+        </div>
+
+        <div class="dev-sep"></div>
+        <button class="dev-btn" id="dv-reset">Reset this element</button>
+        <button class="dev-btn-gold" id="dv-reset-all">Reset all changes</button>
+      </div>`;
+
+    bindControls();
+  }
+
+  function bindControls(){
+    const el = selectedEl;
+    const colorIn   = document.getElementById('dv-color');
+    const colorTxt  = document.getElementById('dv-ctxt');
+    const sizeIn    = document.getElementById('dv-size');
+    const fontIn    = document.getElementById('dv-font');
+    const bgIn      = document.getElementById('dv-bg');
+    const bgTxt     = document.getElementById('dv-bgtxt');
+    const drop      = document.getElementById('dv-drop');
+    const fileIn    = document.getElementById('dv-file');
+
+    colorIn.oninput = ()=>{ colorTxt.value=colorIn.value; el.style.color=colorIn.value; saveEdit(el,{color:colorIn.value}); };
+    colorTxt.oninput = ()=>{ if(/^#[0-9a-fA-F]{6}$/.test(colorTxt.value)){ colorIn.value=colorTxt.value; el.style.color=colorTxt.value; saveEdit(el,{color:colorTxt.value}); } };
+
+    sizeIn.oninput = ()=>{ el.style.fontSize=sizeIn.value+'px'; saveEdit(el,{fontSize:sizeIn.value+'px'}); };
+
+    fontIn.onchange = ()=>{ if(fontIn.value){ el.style.fontFamily=fontIn.value; saveEdit(el,{fontFamily:fontIn.value}); } };
+
+    document.querySelectorAll('.dev-wb').forEach(btn=>{
+      btn.onclick = ()=>{
+        el.style.fontWeight=btn.dataset.w; saveEdit(el,{fontWeight:btn.dataset.w});
+        document.querySelectorAll('.dev-wb').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+
+    bgIn.oninput = ()=>{ bgTxt.value=bgIn.value; el.style.backgroundColor=bgIn.value; saveEdit(el,{bgColor:bgIn.value}); };
+    bgTxt.oninput = ()=>{ if(/^#[0-9a-fA-F]{6}$/.test(bgTxt.value)){ bgIn.value=bgTxt.value; el.style.backgroundColor=bgTxt.value; saveEdit(el,{bgColor:bgTxt.value}); } };
+
+    drop.onclick = ()=> fileIn.click();
+    fileIn.onchange = ()=>{ if(fileIn.files[0]) setImage(fileIn.files[0], el); };
+    drop.ondragover = e=>{ e.preventDefault(); drop.classList.add('drag-over'); };
+    drop.ondragleave = ()=> drop.classList.remove('drag-over');
+    drop.ondrop = e=>{ e.preventDefault(); drop.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) setImage(f,el); };
+
+    document.getElementById('dv-reset').onclick = ()=>{
+      clearEdit(el); el.removeAttribute('style'); buildControls();
+    };
+    document.getElementById('dv-reset-all').onclick = ()=>{
+      if(!confirm('Reset ALL developer changes and reload?')) return;
+      localStorage.removeItem(EDITS_KEY); location.reload();
+    };
+  }
+
+  function setImage(file, el){
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const url = e.target.result;
+      if(el.tagName==='IMG'){ el.src=url; saveEdit(el,{src:url}); }
+      else { el.style.backgroundImage=`url(${url})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; saveEdit(el,{bgImage:url}); }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ── Mark editable elements ── */
+  const TEXT_SEL = 'h1,h2,h3,h4,h5,h6,p,a:not(.nav-book),li,.section-label,.section-title,.hero-eyebrow,.hero-desc,.philosophy-body,.ibe-body,.pillar-title,.pillar-text,.profile-name,.profile-bio,.contact-card-title,.contact-card-text,.footer-tagline,.stat-num,.stat-label,.book-cta-title,.book-cta-sub,.vagaro-title,.vagaro-desc,.faq-q,.faq-a-inner,.strip-item';
+  const BG_SEL   = '.hero-right,.pv-box1,.pv-box2,.pv-box3,.ibe-v1,.ibe-v2,.profile-photo-placeholder,.hero-left,.philosophy,.ibe-teaser,.book-cta,section,footer,img';
+
+  function markEditables(){
+    document.querySelectorAll(TEXT_SEL+','+BG_SEL).forEach(el=>{
+      if(!panel.contains(el) && el !== toggleBtn) el.dataset.dve = '1';
+    });
+  }
+  function unmarkEditables(){
+    document.querySelectorAll('[data-dve]').forEach(el=>{ delete el.dataset.dve; el.classList.remove('dev-sel'); });
+  }
+
+  /* ── Mark draggable grid items ── */
+  function markDraggables(){
+    document.querySelectorAll('.pillar,.profile-card,.process-step,.faq-item,.contact-card').forEach(el=>{
+      el.dataset.dvd = '1'; el.draggable = true;
+      el.addEventListener('dragstart', dStart);
+      el.addEventListener('dragover',  dOver);
+      el.addEventListener('drop',      dDrop);
+      el.addEventListener('dragend',   dEnd);
+    });
+  }
+  function unmarkDraggables(){
+    document.querySelectorAll('[data-dvd]').forEach(el=>{
+      delete el.dataset.dvd; el.draggable = false;
+      el.removeEventListener('dragstart', dStart);
+      el.removeEventListener('dragover',  dOver);
+      el.removeEventListener('drop',      dDrop);
+      el.removeEventListener('dragend',   dEnd);
+    });
+  }
+
+  function dStart(e){ dragSrc=this; this.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+  function dOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; document.querySelectorAll('[data-dvd]').forEach(el=>el.classList.remove('drag-over-target')); this.classList.add('drag-over-target'); }
+  function dDrop(e){
+    e.stopPropagation();
+    if(dragSrc && dragSrc!==this){
+      const p=this.parentNode, next=dragSrc.nextSibling;
+      p.insertBefore(dragSrc, this);
+      if(next) p.insertBefore(this, next); else p.appendChild(this);
+    }
+    this.classList.remove('drag-over-target');
+  }
+  function dEnd(){ document.querySelectorAll('[data-dvd]').forEach(el=>el.classList.remove('dragging','drag-over-target')); dragSrc=null; }
+
+  /* ── Page-level image drop ── */
+  document.addEventListener('dragover', e=>{ if(devMode && !panel.contains(e.target)) e.preventDefault(); });
+  document.addEventListener('drop', e=>{
+    if(!devMode || panel.contains(e.target)) return;
+    const file = e.dataTransfer.files[0];
+    if(!file||!file.type.startsWith('image/')) return;
+    e.preventDefault();
+    const target = e.target.closest('[data-dve]') || e.target;
+    setImage(file, target);
+    selectEl(target);
+  });
+
+  /* ── Select / deselect ── */
+  function selectEl(el){
+    deselectEl();
+    selectedEl = el;
+    el.classList.add('dev-sel');
+    buildControls();
+    panel.classList.add('open');
+  }
+  function deselectEl(){
+    if(selectedEl){ selectedEl.classList.remove('dev-sel'); selectedEl=null; }
+    pb.innerHTML = '<div class="dev-hint">Click any element to select it.</div>';
+  }
+
+  /* ── Click handler (capture) ── */
+  document.addEventListener('click', e=>{
+    if(!devMode) return;
+    if(panel.contains(e.target)||toggleBtn===e.target) return;
+    // Let nav page links still work
+    const pageLink = e.target.closest('[data-page]');
+    const editable = e.target.closest('[data-dve]');
+    if(editable && !pageLink){
+      e.preventDefault(); e.stopPropagation();
+      selectEl(editable);
+    } else if(!editable){
+      deselectEl();
+    }
+  }, true);
+
+  /* ── Toggle ── */
+  function setDevMode(on){
+    devMode = on;
+    document.body.classList.toggle('dev-active', on);
+    panel.classList.toggle('open', on);
+    toggleBtn.classList.toggle('active', on);
+    if(on){ markEditables(); markDraggables(); }
+    else { deselectEl(); unmarkEditables(); unmarkDraggables(); }
+  }
+
+  toggleBtn.addEventListener('click', ()=> setDevMode(!devMode));
+  panel.querySelector('#dev-close').addEventListener('click', ()=> setDevMode(false));
+  document.addEventListener('keydown', e=>{
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='D'){ e.preventDefault(); setDevMode(!devMode); }
+  });
+
+  /* ── Init ── */
+  loadEdits();
+})();
+</script>
 </body>
 </html>
