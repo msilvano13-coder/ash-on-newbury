@@ -1545,6 +1545,14 @@
     width: 38px; height: 34px; border: 1px solid rgba(255,255,255,.1);
     background: rgba(255,255,255,.05); padding: 2px; cursor: pointer; border-radius: 2px; flex-shrink: 0;
   }
+  .dev-textarea {
+    resize: vertical; min-height: 80px; line-height: 1.6; font-size: .72rem !important;
+  }
+  /* Restore text cursor when editing content on the page */
+  body.dev-active [contenteditable] {
+    cursor: text !important; caret-color: var(--gold);
+    outline: 2px solid var(--gold) !important; outline-offset: 2px;
+  }
   .dev-color-text, .dev-inp {
     background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
     color: var(--white); padding: .5rem .75rem; font-size: .7rem;
@@ -1647,6 +1655,7 @@
     } catch(e){}
   }
   function applyData(el, d){
+    if(d.html !== undefined) el.innerHTML = d.html;
     if(d.color)      el.style.color = d.color;
     if(d.fontSize)   el.style.fontSize = d.fontSize;
     if(d.fontFamily) el.style.fontFamily = d.fontFamily;
@@ -1724,9 +1733,17 @@
     const curSize   = Math.round(parseFloat(cs.fontSize));
     const tag = (selectedEl.className || selectedEl.tagName.toLowerCase()).toString().slice(0,60);
 
+    const isTextEl = ['P','H1','H2','H3','H4','H5','H6','SPAN','A','LI','SMALL','EM','STRONG'].includes(selectedEl.tagName);
+
     pb.innerHTML = `
       <div class="dev-sel-info">${tag}</div>
       <div class="dev-ctrls">
+
+        ${isTextEl ? `
+        <p class="dev-st">Edit Content</p>
+        <textarea class="dev-inp dev-textarea" id="dv-text" rows="4" placeholder="Edit text...">${selectedEl.innerHTML.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+        <div class="dev-sep"></div>
+        ` : ''}
 
         <p class="dev-st">Text Color</p>
         <div class="dev-color-row">
@@ -1781,6 +1798,23 @@
 
   function bindControls(){
     const el = selectedEl;
+    // Text content editing
+    const textArea = document.getElementById('dv-text');
+    if(textArea){
+      // Also make element directly editable on page
+      el.contentEditable = 'true';
+      // Sync textarea → element
+      textArea.oninput = ()=>{
+        el.innerHTML = textArea.value.replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+        saveEdit(el, {html: el.innerHTML});
+      };
+      // Sync element edits back to textarea
+      el.addEventListener('input', function syncBack(){
+        textArea.value = el.innerHTML.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        saveEdit(el, {html: el.innerHTML});
+      });
+    }
+
     const colorIn   = document.getElementById('dv-color');
     const colorTxt  = document.getElementById('dv-ctxt');
     const sizeIn    = document.getElementById('dv-size');
@@ -1900,7 +1934,11 @@
     panel.classList.add('open');
   }
   function deselectEl(){
-    if(selectedEl){ selectedEl.classList.remove('dev-sel'); selectedEl=null; }
+    if(selectedEl){
+      selectedEl.classList.remove('dev-sel');
+      selectedEl.removeAttribute('contenteditable');
+      selectedEl=null;
+    }
     pb.innerHTML = '<div class="dev-hint">Click any element to select it.</div>';
   }
 
