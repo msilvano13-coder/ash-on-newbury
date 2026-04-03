@@ -1616,6 +1616,17 @@
   }
   .dev-btn-gold:hover { background: rgba(201,169,110,.18); }
 
+  /* Free-form drag handle */
+  #dev-drag-handle {
+    position: absolute; width: 30px; height: 30px;
+    background: var(--gold); color: var(--charcoal);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: move; z-index: 9990; font-size: 1rem; line-height: 1;
+    box-shadow: 0 2px 10px rgba(0,0,0,.4); user-select: none;
+    pointer-events: all; transition: transform .1s;
+  }
+  #dev-drag-handle:hover { transform: scale(1.15); }
+
   /* Element states in dev mode — no cursor override so custom JS cursor stays intact */
   body.dev-active [data-dve]:not(#dev-panel):not(#dev-toggle):hover {
     outline: 1px dashed rgba(201,169,110,.45) !important;
@@ -1683,6 +1694,12 @@
       el.style.backgroundPosition = 'center';
     }
     if(d.src && el.tagName === 'IMG') el.src = d.src;
+    if(d.translateX !== undefined || d.translateY !== undefined){
+      const x = d.translateX || 0, y = d.translateY || 0;
+      el.style.transform = `translate(${x}px,${y}px)`;
+      el.style.position = 'relative';
+      el.style.zIndex = '10';
+    }
   }
 
   /* ── Path helpers ── */
@@ -1810,6 +1827,14 @@
         </div>
 
         <div class="dev-sep"></div>
+
+        <p class="dev-st">Position (X / Y offset)</p>
+        <div class="dev-color-row">
+          <input type="number" class="dev-inp" id="dv-x" placeholder="X px" style="flex:1">
+          <input type="number" class="dev-inp" id="dv-y" placeholder="Y px" style="flex:1">
+        </div>
+
+        <div class="dev-sep"></div>
         <button class="dev-btn" id="dv-reset">Reset this element</button>
         <button class="dev-btn-gold" id="dv-reset-all">Reset all changes</button>
       </div>`;
@@ -1879,8 +1904,24 @@
     drop.ondragleave = ()=> drop.classList.remove('drag-over');
     drop.ondrop = e=>{ e.preventDefault(); drop.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) setImage(f,el); };
 
+    // X/Y position inputs
+    const xIn = document.getElementById('dv-x');
+    const yIn = document.getElementById('dv-y');
+    const cur = el.style.transform||'';
+    const m = cur.match(/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/);
+    if(m){ xIn.value=Math.round(m[1]); yIn.value=Math.round(m[2]); }
+    function applyTranslate(){
+      const x=parseFloat(xIn.value)||0, y=parseFloat(yIn.value)||0;
+      el.style.transform=`translate(${x}px,${y}px)`;
+      el.style.position='relative'; el.style.zIndex='10';
+      saveEdit(el,{translateX:x,translateY:y});
+      updateDragHandle();
+    }
+    xIn.oninput = applyTranslate;
+    yIn.oninput = applyTranslate;
+
     document.getElementById('dv-reset').onclick = ()=>{
-      clearEdit(el); el.removeAttribute('style'); buildControls();
+      clearEdit(el); el.removeAttribute('style'); removeDragHandle(); buildControls();
     };
     document.getElementById('dv-reset-all').onclick = ()=>{
       if(!confirm('Reset ALL developer changes and reload?')) return;
@@ -1956,12 +1997,76 @@
     selectEl(target);
   });
 
+  /* ── Free-form drag handle ── */
+  let isDragging=false, dragTarget=null, dragStartX=0, dragStartY=0, elStartX=0, elStartY=0;
+
+  function updateDragHandle(){
+    const h = document.getElementById('dev-drag-handle');
+    if(!h || !selectedEl) return;
+    const r = selectedEl.getBoundingClientRect();
+    h.style.left = (r.left + window.scrollX) + 'px';
+    h.style.top  = (r.top  + window.scrollY) + 'px';
+  }
+
+  function addDragHandle(el){
+    removeDragHandle();
+    const h = document.createElement('div');
+    h.id = 'dev-drag-handle';
+    h.innerHTML = '✥';
+    h.title = 'Drag to reposition';
+    document.body.appendChild(h);
+    updateDragHandle();
+
+    h.addEventListener('mousedown', e=>{
+      e.preventDefault(); e.stopPropagation();
+      isDragging = true; dragTarget = el;
+      dragStartX = e.clientX; dragStartY = e.clientY;
+      const cur = el.style.transform || '';
+      const m = cur.match(/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/);
+      elStartX = m ? parseFloat(m[1]) : 0;
+      elStartY = m ? parseFloat(m[2]) : 0;
+      document.addEventListener('mousemove', onFreeDragMove);
+      document.addEventListener('mouseup',   onFreeDragEnd);
+    });
+  }
+
+  function onFreeDragMove(e){
+    if(!isDragging || !dragTarget) return;
+    const x = elStartX + (e.clientX - dragStartX);
+    const y = elStartY + (e.clientY - dragStartY);
+    dragTarget.style.transform = `translate(${x}px,${y}px)`;
+    dragTarget.style.position = 'relative';
+    dragTarget.style.zIndex = '10';
+    updateDragHandle();
+    // Sync panel X/Y inputs live
+    const xi=document.getElementById('dv-x'), yi=document.getElementById('dv-y');
+    if(xi) xi.value = Math.round(x);
+    if(yi) yi.value = Math.round(y);
+  }
+
+  function onFreeDragEnd(){
+    if(!isDragging || !dragTarget) return;
+    isDragging = false;
+    const cur = dragTarget.style.transform||'';
+    const m = cur.match(/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/);
+    if(m) saveEdit(dragTarget,{translateX:parseFloat(m[1]),translateY:parseFloat(m[2])});
+    document.removeEventListener('mousemove', onFreeDragMove);
+    document.removeEventListener('mouseup',   onFreeDragEnd);
+    dragTarget = null;
+  }
+
+  function removeDragHandle(){
+    const h = document.getElementById('dev-drag-handle');
+    if(h) h.remove();
+  }
+
   /* ── Select / deselect ── */
   function selectEl(el){
     deselectEl();
     selectedEl = el;
     el.classList.add('dev-sel');
     buildControls();
+    addDragHandle(el);
     panel.classList.add('open');
   }
   function deselectEl(){
@@ -1970,6 +2075,7 @@
       selectedEl.removeAttribute('contenteditable');
       selectedEl=null;
     }
+    removeDragHandle();
     pb.innerHTML = '<div class="dev-hint">Click any element to select it.</div>';
   }
 
